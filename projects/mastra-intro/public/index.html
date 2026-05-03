@@ -1,0 +1,237 @@
+<!DOCTYPE html>
+<html lang="en">
+  <head>
+    <meta charset="UTF-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+    <title>AI Status Monitor</title>
+    <script src="https://cdn.tailwindcss.com"></script>
+    <script
+      defer
+      src="https://cdn.jsdelivr.net/npm/alpinejs@3.x.x/dist/cdn.min.js"
+    ></script>
+  </head>
+  <body class="bg-[#12171C] text-[#F5F6F7] min-h-screen flex flex-col">
+    <!--
+      Single-page chatbot UI using Alpine.js for reactivity and Tailwind CSS for styling.
+      Talks to two backend endpoints:
+        POST /chat            → sends a message to the agent, returns { text }
+        POST /workflow/start  → starts the service_repair workflow, returns { status, runId, prompt, notification }
+        POST /workflow/resume → resumes a suspended workflow run, returns { status }
+    -->
+    <div
+      x-data="chat()"
+      class="flex flex-col h-screen max-w-3xl mx-auto w-full px-4 py-6"
+    >
+      <!-- Header: title + "Run Repair Services Workflow" button -->
+      <div class="mb-4 border-b border-[#2e3742] pb-4">
+        <div class="flex items-center justify-between">
+          <div>
+            <h1 class="text-xl font-semibold text-[#F5F6F7]">
+              AI Status Monitor
+            </h1>
+            <p class="text-sm text-[#8396A8] mt-0.5">
+              Ask about service health, restart failing services, or run a full
+              diagnostic workflow.
+            </p>
+          </div>
+          <button
+            @click="startWorkflow()"
+            :disabled="loading"
+            class="bg-[#143E20] hover:bg-[#1a5229] disabled:opacity-40 text-[#97DD40] text-sm font-medium px-4 py-2 rounded-xl transition whitespace-nowrap border border-[#97DD40]"
+          >
+            Run Repair Services Workflow
+          </button>
+        </div>
+      </div>
+
+      <!-- Message list: renders user and assistant bubbles -->
+      <div class="flex-1 overflow-y-auto space-y-4 pr-1 mb-4" x-ref="messages">
+        <template x-for="msg in messages" :key="msg.id">
+          <div
+            :class="msg.role === 'user' ? 'flex justify-end' : 'flex justify-start'"
+          >
+            <div
+              :class="msg.role === 'user'
+                ? 'bg-[#00144A] text-[#4DB1FF] rounded-2xl rounded-tr-sm px-4 py-2 max-w-[80%] text-sm border border-[#4DB1FF]/30'
+                : 'bg-[#1D232A] text-[#F5F6F7] rounded-2xl rounded-tl-sm px-4 py-2 max-w-[80%] text-sm border border-[#2e3742]'"
+            >
+              <p
+                class="whitespace-pre-wrap"
+                :class="msg.workflowPending ? 'mb-3' : ''"
+                x-text="msg.text"
+              ></p>
+              <!-- Approve/Reject buttons shown when the workflow is suspended pending Slack notification -->
+              <div x-show="msg.workflowPending" class="mt-3 space-y-2">
+                <p
+                  class="text-xs text-[#8396A8]"
+                  x-text="msg.workflowPrompt"
+                ></p>
+                <div class="flex gap-2">
+                  <button
+                    @click="resumeWorkflow(msg.runId, true)"
+                    class="bg-[#143E20] hover:bg-[#1a5229] text-[#97DD40] border border-[#97DD40] text-xs font-medium py-1 px-3 rounded-lg transition whitespace-nowrap"
+                  >
+                    Approve &amp; Send
+                  </button>
+                  <button
+                    @click="resumeWorkflow(msg.runId, false)"
+                    class="bg-[#490000] hover:bg-[#5c0000] text-[#FA6161] border border-[#FA6161] text-xs font-medium py-1 px-3 rounded-lg transition whitespace-nowrap"
+                  >
+                    Reject
+                  </button>
+                </div>
+              </div>
+            </div>
+          </div>
+        </template>
+
+        <!-- Shown while any fetch is in flight -->
+        <div x-show="loading" class="flex justify-start">
+          <div
+            class="bg-[#1D232A] rounded-2xl rounded-tl-sm px-4 py-3 border border-[#2e3742]"
+          >
+            <span class="flex gap-1">
+              <span
+                class="w-1.5 h-1.5 rounded-full bg-[#8396A8] animate-bounce"
+                style="animation-delay: 0ms"
+              ></span>
+              <span
+                class="w-1.5 h-1.5 rounded-full bg-[#8396A8] animate-bounce"
+                style="animation-delay: 150ms"
+              ></span>
+              <span
+                class="w-1.5 h-1.5 rounded-full bg-[#8396A8] animate-bounce"
+                style="animation-delay: 300ms"
+              ></span>
+            </span>
+          </div>
+        </div>
+      </div>
+
+      <!-- Chat input -->
+      <form @submit.prevent="send()" class="flex gap-2">
+        <input
+          x-model="input"
+          type="text"
+          placeholder="Ask about services or run diagnostics..."
+          :disabled="loading"
+          class="flex-1 bg-[#1D232A] border border-[#2e3742] rounded-xl px-4 py-2.5 text-sm text-[#F5F6F7] placeholder-[#8396A8] focus:outline-none focus:ring-2 focus:ring-[#4DB1FF] disabled:opacity-50"
+        />
+        <button
+          type="submit"
+          :disabled="loading || !input.trim()"
+          class="bg-[#00144A] hover:bg-[#001f6b] disabled:opacity-40 text-[#4DB1FF] border border-[#4DB1FF]/40 font-medium text-sm px-5 py-2.5 rounded-xl transition"
+        >
+          Send
+        </button>
+      </form>
+    </div>
+
+    <script>
+      function chat() {
+        return {
+          input: "",
+          loading: false,
+          messages: [],
+          // Stable IDs for this browser session - passed to the agent for memory scoping
+          threadId: "thread-" + Math.random().toString(36).slice(2),
+          resourceId: "user-browser",
+
+          // Shared fetch helper - throws on non-2xx so callers only handle the happy path
+          async api(url, body) {
+            const res = await fetch(url, {
+              method: "POST",
+              headers: body ? { "Content-Type": "application/json" } : {},
+              body: body ? JSON.stringify(body) : undefined,
+            });
+            const data = await res.json();
+            if (!res.ok) throw new Error(data.error ?? "Unknown error");
+            return data;
+          },
+
+          // Appends an assistant message; extra fields (workflowPending, runId, slackMessage) support the approval UI
+          push(text, extra = {}) {
+            this.messages.push({
+              id: Date.now(),
+              role: "assistant",
+              text,
+              ...extra,
+            });
+          },
+
+          // Sends the user's message to the agent via POST /chat
+          async send() {
+            const text = this.input.trim();
+            if (!text) return;
+            this.messages.push({ id: Date.now(), role: "user", text });
+            this.input = "";
+            this.loading = true;
+            try {
+              const data = await this.api("/chat", {
+                message: text,
+                threadId: this.threadId,
+                resourceId: this.resourceId,
+              });
+              this.push(data.text);
+            } catch (err) {
+              this.push("Error: " + err.message);
+            } finally {
+              this.loading = false;
+              this.$nextTick(() => this.scrollToBottom());
+            }
+          },
+
+          // Starts the service_repair workflow; if it suspends, shows the approval UI
+          async startWorkflow() {
+            this.loading = true;
+            try {
+              const data = await this.api("/workflow/start");
+              if (data.status === "suspended") {
+                this.push(data.notification || data.prompt, {
+                  workflowPending: true,
+                  runId: data.runId,
+                  workflowPrompt: data.prompt,
+                });
+              } else {
+                this.push(
+                  data.message ||
+                    "Workflow completed with status: " + data.status
+                );
+              }
+            } catch (err) {
+              this.push("Error: " + err.message);
+            } finally {
+              this.loading = false;
+              this.$nextTick(() => this.scrollToBottom());
+            }
+          },
+
+          // Resumes a suspended workflow run with the user's approval decision
+          async resumeWorkflow(runId, approved) {
+            this.loading = true;
+            const msg = this.messages.find((m) => m.runId === runId);
+            if (msg) msg.workflowPending = false;
+            try {
+              await this.api("/workflow/resume", { runId, approved });
+              this.push(
+                approved
+                  ? "Slack notification sent successfully."
+                  : "Slack notification cancelled."
+              );
+            } catch (err) {
+              this.push("Failed to resume workflow: " + err.message);
+            } finally {
+              this.loading = false;
+              this.$nextTick(() => this.scrollToBottom());
+            }
+          },
+
+          scrollToBottom() {
+            const el = this.$refs.messages;
+            if (el) el.scrollTop = el.scrollHeight;
+          },
+        };
+      }
+    </script>
+  </body>
+</html>

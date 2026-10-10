@@ -1,6 +1,6 @@
 # Blinky (`no_std` / bare-metal)
 
-Cycles the onboard RGB LED on an **ESP32-S3-WROOM-1** through the color wheel, written in bare-metal Rust with no operating system and no interpreter. This is the `no_std` counterpart to [`blinky-std`](../blinky-std) and mirrors the factory MicroPython RGB demo the board ships with.
+Blinks the onboard RGB LED on an **ESP32-S3-WROOM-1** red, green, blue, one second each, written in bare-metal Rust with no operating system and no interpreter. This is the `no_std` counterpart to [`blinky-std`](../blinky-std) and reproduces the factory MicroPython RGB demo the board ships with.
 
 The only onboard LED is an addressable **WS2812 (NeoPixel) on GPIO48**. It is driven with the chip's **RMT** peripheral through [`esp-hal`](https://github.com/esp-rs/esp-hal) 1.x and `esp-hal-smartled`.
 
@@ -45,6 +45,6 @@ The configured runner is `espflash flash --monitor`, so this flashes the binary 
 RGB Demo (Rust / no_std / esp-hal)
 ```
 
-and the onboard LED breathing through red, green, blue, and back.
+and the onboard LED cycling through red, green, and blue, one second each.
 
 > 💡 If the build fails with a linker error about `xtensa-esp32s3-elf-gcc`, you have not sourced `export-esp.sh` in this shell.

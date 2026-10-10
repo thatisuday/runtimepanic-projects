@@ -8,8 +8,8 @@ Three small projects for the **ESP32-S3-WROOM-1** that show both ways to run Rus
 
 | Project | Track | What it does |
 | --- | --- | --- |
-| [`blinky-no_std`](./blinky-no_std) | `no_std` / bare-metal | Cycles the onboard WS2812 RGB LED (GPIO48) with `esp-hal` + RMT, no OS. |
-| [`blinky-std`](./blinky-std) | `std` / ESP-IDF | The same RGB cycle, written against Rust `std` on FreeRTOS with `esp-idf-hal`. |
+| [`blinky-no_std`](./blinky-no_std) | `no_std` / bare-metal | Blinks the onboard WS2812 RGB LED (GPIO48) red, green, blue, one second each, with `esp-hal` + RMT, no OS. |
+| [`blinky-std`](./blinky-std) | `std` / ESP-IDF | The same red/green/blue cycle, written against Rust `std` on FreeRTOS with `esp-idf-hal`. |
 | [`wifi-json-std`](./wifi-json-std) | `std` / ESP-IDF | Connects to Wi-Fi, does an HTTPS GET to a mock JSON API, parses it with `serde`. |
 
 ## Toolchain

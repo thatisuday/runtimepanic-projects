@@ -1,6 +1,6 @@
 # Blinky (`std` / ESP-IDF)
 
-Cycles the onboard RGB LED on an **ESP32-S3-WROOM-1** through the color wheel, written in Rust `std` on top of ESP-IDF. This is the `std` counterpart to [`blinky-no_std`](../blinky-no_std): same hardware, same effect, but running on FreeRTOS with a real `std` library (threads, `println!`, `Duration`) underneath.
+Blinks the onboard RGB LED on an **ESP32-S3-WROOM-1** red, green, blue, one second each, written in Rust `std` on top of ESP-IDF. This is the `std` counterpart to [`blinky-no_std`](../blinky-no_std): same hardware, same effect, but running on FreeRTOS with a real `std` library (threads, `sleep`, `Duration`) underneath.
 
 The only onboard LED is an addressable **WS2812 (NeoPixel) on GPIO48**. It is driven with the chip's **RMT** peripheral through `esp-idf-hal` and the `ws2812-esp32-rmt-driver` crate.
 
@@ -44,4 +44,4 @@ The configured runner flashes the binary and opens the serial monitor. You shoul
 RGB Demo (Rust / std / esp-idf-hal)
 ```
 
-and the onboard LED breathing through the color wheel.
+and the onboard LED cycling through red, green, and blue, one second each.

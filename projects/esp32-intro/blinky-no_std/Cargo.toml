@@ -1,0 +1,39 @@
+[package]
+edition      = "2024"
+name         = "blinky-no_std"
+rust-version = "1.95"
+version      = "0.1.0"
+
+[[bin]]
+name = "blinky-no_std"
+path = "./src/bin/main.rs"
+
+[dependencies]
+esp-hal = { version = "~1.2.2", features = ["esp32s3", "unstable"] }
+
+esp-bootloader-esp-idf = { version = "0.6.0", features = ["esp32s3"] }
+
+critical-section = "1.2.0"
+esp-alloc        = { version = "0.11.0", features = ["esp32s3"] }
+
+# Logging over the USB-Serial-JTAG (auto-detected output).
+esp-println = { version = "0.18.0", features = ["esp32s3"] }
+
+# WS2812 (NeoPixel) driver built on the RMT peripheral, plus the
+# chip-agnostic smart-leds color helpers. The driver reads its chip from
+# esp-hal, so it does NOT take its own esp32s3 feature here.
+esp-hal-smartled = "0.18.0"
+smart-leds       = "0.4"
+
+
+# For fine tuning these settings, please refer to https://doc.rust-lang.org/cargo/reference/profiles.html
+[profile.dev]
+# The default debug profile is too slow and too big for resource-constrained devices.
+# Always build with some optimizations enabled.
+opt-level = "s"
+
+[profile.release]
+codegen-units = 1     # LLVM can perform better optimizations using a single thread
+debug         = 2     # prefer slower builds but better debugging experience
+lto           = 'fat'
+opt-level     = 's'

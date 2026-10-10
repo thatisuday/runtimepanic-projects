@@ -1,0 +1,18 @@
+[build]
+target = "xtensa-esp32s3-espidf"
+
+[target.xtensa-esp32s3-espidf]
+linker = "ldproxy"
+# Flash and open the serial monitor with `cargo run`.
+runner = "espflash flash --monitor"
+# Build with 64-bit `time_t` (newlib's modern default on ESP-IDF v5).
+rustflags = ["--cfg", "espidf_time64"]
+
+[unstable]
+# Rust's `std` is not prebuilt for this target, so Cargo builds it from source.
+build-std = ["std", "panic_abort"]
+
+[env]
+MCU = "esp32s3"
+# The ESP-IDF version embuild checks out and builds on the first run.
+ESP_IDF_VERSION = "v5.3.3"

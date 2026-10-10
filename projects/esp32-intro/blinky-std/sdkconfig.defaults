@@ -1,0 +1,2 @@
+# The main task runs our Rust `main`; give it a comfortable stack.
+CONFIG_ESP_MAIN_TASK_STACK_SIZE=8000

@@ -1,0 +1,9 @@
+/target
+/.embuild
+Cargo.lock
+# Never commit real Wi-Fi credentials.
+cfg.toml
+.vscode/
+**/*.rs.bk
+*.pdb
+**/.DS_Store

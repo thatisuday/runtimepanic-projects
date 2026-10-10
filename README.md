@@ -9,6 +9,7 @@ Each project lives in `projects/<project-name>` and includes its own setup and r
 | Project                                   | Description                                                                                                    |
 | ----------------------------------------- | -------------------------------------------------------------------------------------------------------------- |
 | [`mastra-intro`](./projects/mastra-intro) | AI-powered DevOps status monitor built with Mastra, mock services, agent tools, memory, and workflow examples. |
+| [`esp32-intro`](./projects/esp32-intro)   | Rust on the ESP32-S3-WROOM-1: bare-metal (`no_std`) and `std`/ESP-IDF blinky demos plus a Wi-Fi JSON API client.               |
 
 ## Usage
 

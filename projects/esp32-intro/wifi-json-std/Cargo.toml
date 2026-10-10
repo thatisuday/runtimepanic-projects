@@ -1,0 +1,38 @@
+[package]
+name    = "wifi-json-std"
+version = "0.1.0"
+edition = "2021"
+rust-version = "1.77"
+
+[[bin]]
+name = "wifi-json-std"
+path = "src/main.rs"
+
+[dependencies]
+# The ESP-IDF services layer: Wi-Fi, the system event loop, NVS, and the
+# HTTP(S) client. It re-exports `esp-idf-hal` as `esp_idf_svc::hal` and
+# `esp-idf-sys` as `esp_idf_svc::sys`.
+esp-idf-svc = "0.52"
+# The portable `embedded-svc` traits (Wi-Fi config, HTTP client) that
+# esp-idf-svc implements.
+embedded-svc = "0.29"
+
+# JSON decoding of the API response.
+serde      = { version = "1", features = ["derive"] }
+serde_json = "1"
+
+anyhow  = "1"
+log     = "0.4"
+# Reads Wi-Fi credentials from `cfg.toml` at compile time.
+toml-cfg = "0.2"
+
+[build-dependencies]
+embuild  = "0.33"
+toml-cfg = "0.2"
+
+[profile.release]
+opt-level = "s"
+
+[profile.dev]
+debug     = true
+opt-level = "z"

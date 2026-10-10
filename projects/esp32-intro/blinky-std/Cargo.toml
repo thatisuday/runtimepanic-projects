@@ -1,0 +1,34 @@
+[package]
+name    = "blinky-std"
+version = "0.1.0"
+edition = "2021"
+rust-version = "1.77"
+
+[[bin]]
+name = "blinky-std"
+path = "src/main.rs"
+
+[dependencies]
+# The ESP-IDF HAL and the raw bindings. These pull in and build ESP-IDF
+# (FreeRTOS, newlib, drivers) and give us a Rust `std` on top of it.
+esp-idf-hal = "0.46"
+esp-idf-sys = "0.37"
+# The services layer, used here just for its logger (EspLogger), which routes
+# through ESP-IDF's logging so output shows on the same console as the boot log.
+esp-idf-svc = "0.52"
+log = "0.4"
+
+# WS2812 (NeoPixel) driver built on ESP-IDF's RMT peripheral, driven through
+# the chip-agnostic smart-leds color helpers.
+ws2812-esp32-rmt-driver = { version = "0.14", features = ["smart-leds-trait"] }
+smart-leds = "0.4"
+
+[build-dependencies]
+embuild = "0.33"
+
+[profile.release]
+opt-level = "s"
+
+[profile.dev]
+debug    = true     # symbols are nice.
+opt-level = "z"

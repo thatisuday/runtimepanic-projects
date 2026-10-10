@@ -1,0 +1,7 @@
+# Copy this file to `cfg.toml` and fill in your Wi-Fi credentials.
+# `cfg.toml` is gitignored so your real credentials never get committed.
+#
+# The table name must match the package name in Cargo.toml.
+[wifi-json-std]
+wifi_ssid = "your-network-name"
+wifi_pass = "your-network-password"
